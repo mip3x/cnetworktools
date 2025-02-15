@@ -1,2 +1,2 @@
-# cping
-Simple ping utility written in C
+# networklibc
+Simple network library written in C
