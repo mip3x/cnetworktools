@@ -1,2 +1,2 @@
 # networklibc
-Simple network library written in C
+Simple network tools written in C
