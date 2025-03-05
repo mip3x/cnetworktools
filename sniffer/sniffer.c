@@ -21,7 +21,17 @@ unsigned short iphdrlen;
 unsigned int l4proto;
 
 void payload(unsigned char* buffer, size_t buflen) {
-    size_t summary_headers_length = iphdrlen + sizeof(struct ethhdr) + sizeof(struct udphdr);
+    size_t summary_headers_length = iphdrlen + sizeof(struct ethhdr);
+
+    switch (l4proto) {
+        case TCP:
+            summary_headers_length += sizeof(struct tcphdr);
+            break;
+        case UDP:
+            summary_headers_length += sizeof(struct udphdr);
+            break;
+    }
+
     unsigned char* data = (buffer + summary_headers_length);
     size_t remaining_data = buflen - summary_headers_length;
 
