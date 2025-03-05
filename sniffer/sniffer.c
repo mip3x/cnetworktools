@@ -1,4 +1,5 @@
 #include <linux/if_ether.h>
+#include <linux/ip.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -53,4 +54,28 @@ int main() {
            eth->h_dest[5]
     );
     printf("\t|-Protocol: %04X \n", (__be16)eth->h_proto);
+
+    struct sockaddr_in source;
+    struct sockaddr_in dest;
+
+    unsigned short iphdrlen;
+    struct iphdr* ip = (struct iphdr*)(buffer + sizeof(struct ethhdr));
+
+    memset(&source, 0, sizeof(source));
+    source.sin_addr.s_addr = ip->saddr;
+
+    memset(&dest, 0, sizeof(dest));
+    dest.sin_addr.s_addr = ip->daddr;
+
+    printf("\nIP Header\n");
+    printf("\t|-Version: %d\n", (unsigned int)ip->version);
+    printf("\t|-Internet Header Length: %d DWORDS or %d Bytes\n", (unsigned int)ip->ihl, ((unsigned int)(ip->ihl)) * 4);
+    printf("\t|-Type Of Service: %d\n", (unsigned int)ip->tos);
+    printf("\t|-Total Length: %d\n", (unsigned int)ip->tot_len);
+    printf("\t|-Identification: %d Bytes\n", ntohs(ip->id));
+    printf("\t|-Time To Live: %d\n", (unsigned int)ip->ttl);
+    printf("\t|-Protocol: %d\n", (unsigned int)ip->protocol);
+    printf("\t|-Header Checksum: %d\n", ntohs(ip->check));
+    printf("\t|-Source IP: %s\n", inet_ntoa(source.sin_addr));
+    printf("\t|-Destination IP: %s\n", inet_ntoa(dest.sin_addr));
 }
