@@ -59,8 +59,8 @@ void ip_header(unsigned char* buffer, size_t buflen) {
     fprintf(log_file, "\nIP Header\n");
     fprintf(log_file, "\t|-Version\t\t\t\t: %d\n", (unsigned int)ip->version);
     fprintf(log_file, "\t|-Internet Header Length: %d DWORDS or %d Bytes\n", (unsigned int)ip->ihl, ((unsigned int)(ip->ihl)) * 4);
-    fprintf(log_file, "\t|-Type Of Service\t\t: %" PRIu8 "\n", ip->tos);
-    fprintf(log_file, "\t|-Total Length\t\t\t: %" PRIu16 "\n", ip->tot_len);
+    fprintf(log_file, "\t|-Type Of Service\t\t: %" PRIu8 "\n", ntohs(ip->tos));
+    fprintf(log_file, "\t|-Total Length\t\t\t: %" PRIu16 "\n", ntohs(ip->tot_len));
     fprintf(log_file, "\t|-Identification\t\t: %" PRIu16 " Bytes\n", ntohs(ip->id));
 
     fprintf(log_file, "\t|----------Flags----------\n");
@@ -69,7 +69,7 @@ void ip_header(unsigned char* buffer, size_t buflen) {
 
     fprintf(log_file, "\t|-Time To Live\t\t\t: %" PRIu8 "\n", ip->ttl);
     fprintf(log_file, "\t|-Protocol\t\t\t\t: %" PRIu8 "\n", ip->protocol);
-    fprintf(log_file, "\t|-Header Checksum\t\t: %" PRIu8 "\n", ntohs(ip->check));
+    fprintf(log_file, "\t|-Header Checksum\t\t: %" PRIu8 " (0x%" PRIx8 ")\n", ntohs(ip->check), ntohs(ip->check));
     fprintf(log_file, "\t|-Source IP\t\t\t\t: %s\n", inet_ntoa(source.sin_addr));
     fprintf(log_file, "\t|-Destination IP\t\t: %s\n", inet_ntoa(dest.sin_addr));
 
@@ -127,17 +127,13 @@ void tcp_header(unsigned char* buffer, size_t buflen) {
     fprintf(log_file, "\t\t|-Finish Flag\t\t\t: %" PRIu16 "\n", tcp->fin);
 
     fprintf(log_file, "\t|-Window size\t\t\t: %" PRIu16 "\n", ntohs(tcp->window));
-    fprintf(log_file, "\t|-Checksum\t\t\t\t: %" PRIu16 "\n", ntohs(tcp->check));
+    fprintf(log_file, "\t|-Checksum\t\t\t\t: %" PRIu16 " (0x%" PRIx16 ")\n", ntohs(tcp->check), ntohs(tcp->check));
     fprintf(log_file, "\t|-Urgent Pointer\t\t: %" PRIu16 "\n", tcp->urg_ptr);
 
     payload(buffer, buflen);
     fprintf(log_file, "\nTCP HEADER SIZE: %zu\nTCP STRUCT SIZE: %zu\n", sizeof(*tcp), sizeof(struct tcphdr));
     fprintf(log_file, "*****************************************************************\n");
     fprintf(log_file, "\nBUFLEN: %zu\n", buflen);
-
-    for (size_t i = 0; i < buflen; i++) {
-        fprintf(log_file, "%02X", buffer[i]);
-    }
 }
 
 void udp_header(unsigned char* buffer, size_t buflen) {
