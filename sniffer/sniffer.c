@@ -67,6 +67,7 @@ void ip_header(unsigned char* buffer, size_t buflen) {
     fprintf(log_file, "\t\t|-(DF) Don't Fragment\t: %" PRIu16 "\n", htons(ip->frag_off) >> 14);
     fprintf(log_file, "\t\t|-(MF) More Fragments\t: %" PRIu16 "\n", htons(ip->frag_off) >> 13 & 0x01);
 
+    fprintf(log_file, "\t|-Fragment Offset\t\t: %" PRIu16 "\n", htons(ip->frag_off) & 0x1fff);
     fprintf(log_file, "\t|-Time To Live\t\t\t: %" PRIu8 "\n", ip->ttl);
     fprintf(log_file, "\t|-Protocol\t\t\t\t: %" PRIu8 "\n", ip->protocol);
     fprintf(log_file, "\t|-Header Checksum\t\t: %" PRIu8 " (0x%" PRIx8 ")\n", ntohs(ip->check), ntohs(ip->check));
