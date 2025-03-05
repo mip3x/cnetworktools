@@ -15,6 +15,8 @@
 #define TCP 6
 #define UDP 17
 #define LOG_FILE_PATH "log.txt"
+#define IP_FRAGMENT_OFFSET_MASK 0x1fff
+#define IP_MF_MASK 0x01
 
 FILE* log_file;
 unsigned int total, tcp, udp, other;
@@ -61,13 +63,13 @@ void ip_header(unsigned char* buffer, size_t buflen) {
     fprintf(log_file, "\t|-Internet Header Length: %d DWORDS or %d Bytes\n", (unsigned int)ip->ihl, ((unsigned int)(ip->ihl)) * 4);
     fprintf(log_file, "\t|-Type Of Service\t\t: %" PRIu8 "\n", ntohs(ip->tos));
     fprintf(log_file, "\t|-Total Length\t\t\t: %" PRIu16 "\n", ntohs(ip->tot_len));
-    fprintf(log_file, "\t|-Identification\t\t: %" PRIu16 " Bytes\n", ntohs(ip->id));
+    fprintf(log_file, "\t|-Identification\t\t: %" PRIu16 " Bytes (0x%" PRIx16 ")\n", ntohs(ip->id), ntohs(ip->id));
 
     fprintf(log_file, "\t|----------Flags----------\n");
     fprintf(log_file, "\t\t|-(DF) Don't Fragment\t: %" PRIu16 "\n", htons(ip->frag_off) >> 14);
-    fprintf(log_file, "\t\t|-(MF) More Fragments\t: %" PRIu16 "\n", htons(ip->frag_off) >> 13 & 0x01);
+    fprintf(log_file, "\t\t|-(MF) More Fragments\t: %" PRIu16 "\n", htons(ip->frag_off) >> 13 & IP_MF_MASK);
 
-    fprintf(log_file, "\t|-Fragment Offset\t\t: %" PRIu16 "\n", htons(ip->frag_off) & 0x1fff);
+    fprintf(log_file, "\t|-Fragment Offset\t\t: %" PRIu16 "\n", htons(ip->frag_off) & IP_FRAGMENT_OFFSET_MASK);
     fprintf(log_file, "\t|-Time To Live\t\t\t: %" PRIu8 "\n", ip->ttl);
     fprintf(log_file, "\t|-Protocol\t\t\t\t: %" PRIu8 "\n", ip->protocol);
     fprintf(log_file, "\t|-Header Checksum\t\t: %" PRIu8 " (0x%" PRIx8 ")\n", ntohs(ip->check), ntohs(ip->check));
