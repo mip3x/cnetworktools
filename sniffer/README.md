@@ -27,4 +27,4 @@ sudo ./server
 ## Configuration
 TODO: 
 - make interface choosable (loopback etc)
-- implement sniffing amap protocols
+- implement sniffing amount of amap protocols
