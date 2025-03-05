@@ -13,61 +13,27 @@
 
 #define TCP 6
 #define UDP 17
+#define LOG_FILE_PATH "log.txt"
 
+FILE* log_file;
 unsigned int total, tcp, udp, other;
-
 unsigned short iphdrlen;
 unsigned int l4proto;
 
-void payload(unsigned char* buffer, int buflen) {
+void payload(unsigned char* buffer, size_t buflen) {
     size_t summary_headers_length = iphdrlen + sizeof(struct ethhdr) + sizeof(struct udphdr);
     unsigned char* data = (buffer + summary_headers_length);
-    int remaining_data = buflen - summary_headers_length;
+    size_t remaining_data = buflen - summary_headers_length;
 
-    for (int i = 0; i < remaining_data; i++) {
-        if (i % 16 == 0) printf("\n");
-        printf("%.2X ", data[i]);
+    fprintf(log_file, "\nData:\n");
+    for (size_t i = 0; i < remaining_data; i++) {
+        if (i % 16 == 0) fprintf(log_file, "\n");
+        fprintf(log_file, "%.2X ", data[i]);
     }
-    printf("\n");
-
-    printf("\nREMAIN DATA SIZE: %d\n", remaining_data);
+    fprintf(log_file, "\n\nPAYLOAD SIZE: %zu\n", remaining_data);
 }
 
-void tcp_header(unsigned char* buffer, int buflen) {
-    struct tcphdr* tcp = (struct tcphdr*)(buffer + iphdrlen + sizeof(struct ethhdr));
-
-    printf("\nTCP Header\n");
-    printf("\t|-Source Port\t\t: %d\n", ntohs(tcp->source));
-    printf("\t|-Destination Port\t: %d \n", ntohs(tcp->dest));
-    printf("\t|-Sequence number\t: %d\n", ntohl(tcp->seq));
-    printf("\t|-Acknowledgment Number\t: %d\n", ntohl(tcp->ack_seq));
-    printf("\t|-Header Length\t\t: %d DWORDS or %d bytes\n", (unsigned int)tcp->doff, (unsigned int)tcp->doff * 4);
-    printf("\t|----------Flags----------\n");
-    printf("\t\t|-Urgent Flag\t\t: %d\n", (unsigned int)tcp->urg);
-    printf("\t\t|-Acknowledgement Flag\t: %d\n", (unsigned int)tcp->ack);
-    printf("\t\t|-Push Flag\t\t: %d\n", (unsigned int)tcp->psh);
-    printf("\t\t|-Reset Flag\t\t: %d\n", (unsigned int)tcp->rst);
-    printf("\t\t|-Synchronise Flag\t: %d\n", (unsigned int)tcp->syn);
-    printf("\t\t|-Finish Flag\t\t: %d\n", (unsigned int)tcp->fin);
-    printf("\t|-Window size\t\t: %d\n", ntohs(tcp->window));
-    printf("\t|-Checksum\t\t: %d\n", ntohs(tcp->check));
-    printf("\t|-Urgent Pointer\t: %d\n", tcp->urg_ptr);
-
-    printf("\nTCP PACKET SIZE: %zu\nTCP STRUCT SIZE: %zu\n", sizeof(*tcp), sizeof(struct tcphdr));
-}
-
-void udp_header(unsigned char* buffer, int buflen) {
-    struct udphdr* udp = (struct udphdr*)(buffer + iphdrlen + sizeof(struct ethhdr));
-    printf("\nUDP Header\n");
-    printf("\t|-Source Port\t\t: %d\n", ntohs(udp->source));
-    printf("\t|-Destination Port\t: %d\n", ntohs(udp->dest));
-    printf("\t|-UDP Length\t\t: %d\n", ntohs(udp->len));
-    printf("\t|-UDP Checksum\t\t: %d\n", ntohs(udp->check));
-
-    printf("\nUDP PACKET SIZE: %zu\nUDP STRUCT SIZE: %zu\n", sizeof(*udp), sizeof(struct udphdr));
-}
-
-void ip_header(unsigned char* buffer, int buflen) {
+void ip_header(unsigned char* buffer, size_t buflen) {
     struct sockaddr_in source;
     struct sockaddr_in dest;
 
@@ -79,28 +45,28 @@ void ip_header(unsigned char* buffer, int buflen) {
     memset(&dest, 0, sizeof(dest));
     dest.sin_addr.s_addr = ip->daddr;
 
-    printf("\nIP Header\n");
-    printf("\t|-Version\t\t: %d\n", (unsigned int)ip->version);
-    printf("\t|-Internet Header Length: %d DWORDS or %d Bytes\n", (unsigned int)ip->ihl, ((unsigned int)(ip->ihl)) * 4);
-    printf("\t|-Type Of Service\t: %d\n", (unsigned int)ip->tos);
-    printf("\t|-Total Length\t\t: %d\n", (unsigned int)ip->tot_len);
-    printf("\t|-Identification\t: %d Bytes\n", ntohs(ip->id));
-    printf("\t|-Time To Live\t\t: %d\n", (unsigned int)ip->ttl);
-    printf("\t|-Protocol\t\t: %d\n", (unsigned int)ip->protocol);
-    printf("\t|-Header Checksum\t: %d\n", ntohs(ip->check));
-    printf("\t|-Source IP\t\t: %s\n", inet_ntoa(source.sin_addr));
-    printf("\t|-Destination IP\t: %s\n", inet_ntoa(dest.sin_addr));
+    fprintf(log_file, "\nIP Header\n");
+    fprintf(log_file, "\t|-Version\t\t\t\t: %d\n", (unsigned int)ip->version);
+    fprintf(log_file, "\t|-Internet Header Length: %d DWORDS or %d Bytes\n", (unsigned int)ip->ihl, ((unsigned int)(ip->ihl)) * 4);
+    fprintf(log_file, "\t|-Type Of Service\t\t: %d\n", (unsigned int)ip->tos);
+    fprintf(log_file, "\t|-Total Length\t\t\t: %d\n", (unsigned int)ip->tot_len);
+    fprintf(log_file, "\t|-Identification\t\t: %d Bytes\n", ntohs(ip->id));
+    fprintf(log_file, "\t|-Time To Live\t\t\t: %d\n", (unsigned int)ip->ttl);
+    fprintf(log_file, "\t|-Protocol\t\t\t\t: %d\n", (unsigned int)ip->protocol);
+    fprintf(log_file, "\t|-Header Checksum\t\t: %d\n", ntohs(ip->check));
+    fprintf(log_file, "\t|-Source IP\t\t\t\t: %s\n", inet_ntoa(source.sin_addr));
+    fprintf(log_file, "\t|-Destination IP\t\t: %s\n", inet_ntoa(dest.sin_addr));
 
-    printf("\nIP PACKET SIZE: %zu\nIP STRUCT SIZE: %zu\n", sizeof(*ip), sizeof(struct iphdr));
+    fprintf(log_file, "\nIP HEADER SIZE: %zu\nIP STRUCT SIZE: %zu\n", sizeof(*ip), sizeof(struct iphdr));
 
     iphdrlen = ip->ihl * 4;
     l4proto = (unsigned int)ip->protocol;
 }
 
-void ethernet_header(unsigned char* buffer, int buflen) {
+void ethernet_header(unsigned char* buffer, size_t buflen) {
     struct ethhdr* eth = (struct ethhdr*)(buffer);
-    printf("\nEthernet Header\n");
-    printf("\t|-Source Address\t: %.2X-%.2X-%.2X-%.2X-%.2X-%.2X\n",
+    fprintf(log_file, "\nEthernet Header\n");
+    fprintf(log_file, "\t|-Source Address\t\t: %.2X-%.2X-%.2X-%.2X-%.2X-%.2X\n",
            eth->h_source[0],
            eth->h_source[1],
            eth->h_source[2],
@@ -108,7 +74,7 @@ void ethernet_header(unsigned char* buffer, int buflen) {
            eth->h_source[4],
            eth->h_source[5]
     );
-    printf("\t|-Destination Address\t: %.2X-%.2X-%.2X-%.2X-%.2X-%.2X\n",
+    fprintf(log_file, "\t|-Destination Address\t: %.2X-%.2X-%.2X-%.2X-%.2X-%.2X\n",
            eth->h_dest[0],
            eth->h_dest[1],
            eth->h_dest[2],
@@ -116,12 +82,63 @@ void ethernet_header(unsigned char* buffer, int buflen) {
            eth->h_dest[4],
            eth->h_dest[5]
     );
-    printf("\t|-Protocol\t\t: %04X \n", (__be16)eth->h_proto);
+    fprintf(log_file, "\t|-Protocol\t\t\t\t: %04X \n", (__be16)eth->h_proto);
     
-    printf("\nETH PACKET SIZE: %zu\nETH STRUCT SIZE: %zu\n", sizeof(*eth), sizeof(struct ethhdr));
+    fprintf(log_file, "\nETH HEADER SIZE: %zu\nETH STRUCT SIZE: %zu\n", sizeof(*eth), sizeof(struct ethhdr));
 }
 
-void process_data(unsigned char* buffer, int buflen) {
+void tcp_header(unsigned char* buffer, size_t buflen) {
+    fprintf(log_file, "\n*************************TCP Packet******************************");
+
+    ethernet_header(buffer, buflen);
+    ip_header(buffer, buflen);
+
+    struct tcphdr* tcp = (struct tcphdr*)(buffer + iphdrlen + sizeof(struct ethhdr));
+
+    fprintf(log_file, "\nTCP Header\n");
+    fprintf(log_file, "\t|-Source Port\t\t\t: %d\n", ntohs(tcp->source));
+    fprintf(log_file, "\t|-Destination Port\t\t: %d \n", ntohs(tcp->dest));
+    fprintf(log_file, "\t|-Sequence number\t\t: %d\n", ntohl(tcp->seq));
+    fprintf(log_file, "\t|-Acknowledgment Number\t: %d\n", ntohl(tcp->ack_seq));
+    fprintf(log_file, "\t|-Header Length\t\t\t: %d DWORDS or %d bytes\n", (unsigned int)tcp->doff, (unsigned int)tcp->doff * 4);
+    fprintf(log_file, "\t|----------Flags----------\n");
+    fprintf(log_file, "\t\t|-Urgent Flag\t\t\t: %d\n", (unsigned int)tcp->urg);
+    fprintf(log_file, "\t\t|-Acknowledgement Flag\t: %d\n", (unsigned int)tcp->ack);
+    fprintf(log_file, "\t\t|-Push Flag\t\t\t\t: %d\n", (unsigned int)tcp->psh);
+    fprintf(log_file, "\t\t|-Reset Flag\t\t\t: %d\n", (unsigned int)tcp->rst);
+    fprintf(log_file, "\t\t|-Synchronise Flag\t\t: %d\n", (unsigned int)tcp->syn);
+    fprintf(log_file, "\t\t|-Finish Flag\t\t\t: %d\n", (unsigned int)tcp->fin);
+    fprintf(log_file, "\t|-Window size\t\t\t: %d\n", ntohs(tcp->window));
+    fprintf(log_file, "\t|-Checksum\t\t\t\t: %d\n", ntohs(tcp->check));
+    fprintf(log_file, "\t|-Urgent Pointer\t\t: %d\n", tcp->urg_ptr);
+
+    payload(buffer, buflen);
+    fprintf(log_file, "\nTCP HEADER SIZE: %zu\nTCP STRUCT SIZE: %zu\n", sizeof(*tcp), sizeof(struct tcphdr));
+    fprintf(log_file, "*****************************************************************\n");
+    fprintf(log_file, "\nBUFLEN: %zu\n", buflen);
+}
+
+void udp_header(unsigned char* buffer, size_t buflen) {
+    fprintf(log_file, "\n*************************UDP Packet******************************");
+
+    ethernet_header(buffer, buflen);
+    ip_header(buffer, buflen);
+
+    struct udphdr* udp = (struct udphdr*)(buffer + iphdrlen + sizeof(struct ethhdr));
+
+    fprintf(log_file, "\nUDP Header\n");
+    fprintf(log_file, "\t|-Source Port\t\t\t: %d\n", ntohs(udp->source));
+    fprintf(log_file, "\t|-Destination Port\t\t: %d\n", ntohs(udp->dest));
+    fprintf(log_file, "\t|-UDP Length\t\t\t: %d\n", ntohs(udp->len));
+    fprintf(log_file, "\t|-UDP Checksum\t\t\t: %d\n", ntohs(udp->check));
+
+    payload(buffer, buflen);
+    fprintf(log_file, "\nUDP HEADER SIZE: %zu\nUDP STRUCT SIZE: %zu\n", sizeof(*udp), sizeof(struct udphdr));
+	fprintf(log_file, "*****************************************************************\n");
+    fprintf(log_file, "\nBUFLEN: %zu\n", buflen);
+}
+
+void process_data(unsigned char* buffer, size_t buflen) {
     struct iphdr* ip = (struct iphdr*)(buffer + sizeof(struct ethhdr));
     ++total;
     switch (ip->protocol) {
@@ -163,6 +180,14 @@ int main() {
 
     unsigned char* buffer = (unsigned char*) malloc(65536);
     memset(buffer, 0, 65536);
+
+    log_file = fopen(LOG_FILE_PATH, "w");
+    if (!log_file) {
+        printf("unable to open %s\n", LOG_FILE_PATH);
+        return -1;
+    }
+    printf("file %s was opened successfully\n", LOG_FILE_PATH);
+
     struct sockaddr saddr;
     socklen_t saddr_len = sizeof(saddr);
 
@@ -171,8 +196,8 @@ int main() {
     while (1) {
         /* receive a network packet and copy it into buffer */
         size_t buflen = recvfrom(sock_raw, buffer, 65536, 0, &saddr, &saddr_len);
-        printf("\nBUFLEN: %zu\n", buflen);
         
+        fflush(log_file);
         process_data(buffer, buflen);
     }
 
