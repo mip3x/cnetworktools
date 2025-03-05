@@ -1,5 +1,8 @@
 #include <linux/if_ether.h>
 #include <linux/ip.h>
+#include <linux/udp.h>
+#include <linux/tcp.h>
+#include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -34,6 +37,7 @@ int main() {
 
     /* receive a network packet and copy it into buffer */
     size_t buflen = recvfrom(sock_raw, buffer, 65536, 0, &saddr, &saddr_len);
+    printf("\nBUFLEN: %zu\n", buflen);
 
     struct ethhdr* eth = (struct ethhdr*)(buffer);
     printf("\nEthernet Header\n");
@@ -54,6 +58,8 @@ int main() {
            eth->h_dest[5]
     );
     printf("\t|-Protocol: %04X \n", (__be16)eth->h_proto);
+    
+    printf("\nETH PACKET SIZE: %zu\nETH STRUCT SIZE: %zu\n", sizeof(*eth), sizeof(struct ethhdr));
 
     struct sockaddr_in source;
     struct sockaddr_in dest;
@@ -78,4 +84,17 @@ int main() {
     printf("\t|-Header Checksum: %d\n", ntohs(ip->check));
     printf("\t|-Source IP: %s\n", inet_ntoa(source.sin_addr));
     printf("\t|-Destination IP: %s\n", inet_ntoa(dest.sin_addr));
+
+    printf("\nIP PACKET SIZE: %zu\nIP STRUCT SIZE: %zu\n", sizeof(*ip), sizeof(struct iphdr));
+
+    iphdrlen = ip->ihl * 4;
+    struct udphdr* udp = (struct udphdr*)(buffer + iphdrlen + sizeof(struct ethhdr));
+
+    printf("\nUDP Header\n");
+    printf("\t|-Source Port: %d\n", ntohs(udp->source));
+    printf("\t|-Destination Port: %d\n", ntohs(udp->dest));
+    printf("\t|-UDP Length: %d\n", ntohs(udp->len));
+    printf("\t|-UDP Checksum: %d\n", ntohs(udp->check));
+
+    printf("\nUDP PACKET SIZE: %zu\nUDP STRUCT SIZE: %zu\n", sizeof(*udp), sizeof(struct udphdr));
 }
