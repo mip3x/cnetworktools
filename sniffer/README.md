@@ -21,7 +21,7 @@ This will generate an executable named `sniffer`
 ## Running the Sniffer
 To start the sniffer, use:
 ```sh
-sudo ./server
+sudo ./sniffer
 ```
 
 ## Configuration
