@@ -2,7 +2,7 @@
 This is packet sniffer
 
 ## Features
-- Sniff packets (only ETH&IP&TCP/UDP for now)
+- Sniff packets (only ETH & IP & ICMP & TCP/UDP for now)
 
 ## Installation
 ### Prerequisites
