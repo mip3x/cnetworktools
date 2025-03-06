@@ -1,15 +1,24 @@
-OBJECTS = sniffer.o
 TARGET = sniffer
 CC = gcc
+CFLAGS = -Wall -I./core -I./payload -I./protocols
 
-default: $(TARGET)
+SOURCES := $(wildcard core/*.c) $(wildcard payload/*.c) $(wildcard protocols/*.c)
+OBJECTS := $(addprefix build/,$(notdir $(SOURCES:.c=.o)))
 
-%.o: %.c 
-	$(CC) -c $< -o $@
+VPATH = core:payload:protocols
+
+all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(OBJECTS) -o $@
+	$(CC) $(OBJECTS) -o $(TARGET)
+
+build/%.o: %.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build:
+	mkdir -p build
 
 clean:
-	-rm -f $(OBJECTS)
-	-rm -f $(TARGET)
+	rm -rf build $(TARGET)
+
+.PHONY: all clean build
