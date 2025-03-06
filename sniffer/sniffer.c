@@ -1,8 +1,12 @@
+#include <linux/if_ether.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 #include <netinet/in.h>
+
+#include <linux/icmp.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
@@ -12,16 +16,43 @@
 #include <unistd.h>
 #include <inttypes.h>
 
+#define ICMP 1
+
 #define TCP 6
 #define UDP 17
+
 #define LOG_FILE_PATH "log.txt"
 #define IP_FRAGMENT_OFFSET_MASK 0x1fff
 #define IP_MF_MASK 0x01
 
 FILE* log_file;
-unsigned int total, tcp, udp, other;
+unsigned int total, icmp, tcp, udp, other;
 unsigned short iphdrlen;
 uint8_t l4proto;
+
+void ethernet_header(unsigned char* buffer, size_t buflen) {
+    struct ethhdr* eth = (struct ethhdr*)(buffer);
+    fprintf(log_file, "\nEthernet Header\n");
+    fprintf(log_file, "\t|-Source Address\t\t: %.2X-%.2X-%.2X-%.2X-%.2X-%.2X\n",
+           eth->h_source[0],
+           eth->h_source[1],
+           eth->h_source[2],
+           eth->h_source[3],
+           eth->h_source[4],
+           eth->h_source[5]
+    );
+    fprintf(log_file, "\t|-Destination Address\t: %.2X-%.2X-%.2X-%.2X-%.2X-%.2X\n",
+           eth->h_dest[0],
+           eth->h_dest[1],
+           eth->h_dest[2],
+           eth->h_dest[3],
+           eth->h_dest[4],
+           eth->h_dest[5]
+    );
+    fprintf(log_file, "\t|-Protocol\t\t\t\t: %d\n", eth->h_proto);
+    
+    fprintf(log_file, "\nETH HEADER SIZE: %zu\nETH STRUCT SIZE: %zu\n", sizeof(*eth), sizeof(struct ethhdr));
+}
 
 void payload(unsigned char* buffer, size_t buflen) {
     size_t summary_headers_length = iphdrlen + sizeof(struct ethhdr);
@@ -30,6 +61,7 @@ void payload(unsigned char* buffer, size_t buflen) {
         case TCP:
             summary_headers_length += sizeof(struct tcphdr);
             break;
+
         case UDP:
             summary_headers_length += sizeof(struct udphdr);
             break;
@@ -61,15 +93,15 @@ void ip_header(unsigned char* buffer, size_t buflen) {
     fprintf(log_file, "\nIP Header\n");
     fprintf(log_file, "\t|-Version\t\t\t\t: %d\n", (unsigned int)ip->version);
     fprintf(log_file, "\t|-Internet Header Length: %d DWORDS or %d Bytes\n", (unsigned int)ip->ihl, ((unsigned int)(ip->ihl)) * 4);
-    fprintf(log_file, "\t|-Type Of Service\t\t: %" PRIu8 "\n", ntohs(ip->tos));
+    fprintf(log_file, "\t|-Type Of Service\t\t: %" PRIu8 "\n", ip->tos);
     fprintf(log_file, "\t|-Total Length\t\t\t: %" PRIu16 "\n", ntohs(ip->tot_len));
     fprintf(log_file, "\t|-Identification\t\t: %" PRIu16 " Bytes (0x%" PRIx16 ")\n", ntohs(ip->id), ntohs(ip->id));
 
     fprintf(log_file, "\t|----------Flags----------\n");
-    fprintf(log_file, "\t\t|-(DF) Don't Fragment\t: %" PRIu16 "\n", htons(ip->frag_off) >> 14);
-    fprintf(log_file, "\t\t|-(MF) More Fragments\t: %" PRIu16 "\n", htons(ip->frag_off) >> 13 & IP_MF_MASK);
+    fprintf(log_file, "\t\t|-(DF) Don't Fragment\t: %" PRIu16 "\n", ntohs(ip->frag_off) >> 14);
+    fprintf(log_file, "\t\t|-(MF) More Fragments\t: %" PRIu16 "\n", ntohs(ip->frag_off) >> 13 & IP_MF_MASK);
 
-    fprintf(log_file, "\t|-Fragment Offset\t\t: %" PRIu16 "\n", htons(ip->frag_off) & IP_FRAGMENT_OFFSET_MASK);
+    fprintf(log_file, "\t|-Fragment Offset\t\t: %" PRIu16 "\n", ntohs(ip->frag_off) & IP_FRAGMENT_OFFSET_MASK);
     fprintf(log_file, "\t|-Time To Live\t\t\t: %" PRIu8 "\n", ip->ttl);
     fprintf(log_file, "\t|-Protocol\t\t\t\t: %" PRIu8 "\n", ip->protocol);
     fprintf(log_file, "\t|-Header Checksum\t\t: %" PRIu8 " (0x%" PRIx8 ")\n", ntohs(ip->check), ntohs(ip->check));
@@ -82,28 +114,45 @@ void ip_header(unsigned char* buffer, size_t buflen) {
     l4proto = ip->protocol;
 }
 
-void ethernet_header(unsigned char* buffer, size_t buflen) {
-    struct ethhdr* eth = (struct ethhdr*)(buffer);
-    fprintf(log_file, "\nEthernet Header\n");
-    fprintf(log_file, "\t|-Source Address\t\t: %.2X-%.2X-%.2X-%.2X-%.2X-%.2X\n",
-           eth->h_source[0],
-           eth->h_source[1],
-           eth->h_source[2],
-           eth->h_source[3],
-           eth->h_source[4],
-           eth->h_source[5]
-    );
-    fprintf(log_file, "\t|-Destination Address\t: %.2X-%.2X-%.2X-%.2X-%.2X-%.2X\n",
-           eth->h_dest[0],
-           eth->h_dest[1],
-           eth->h_dest[2],
-           eth->h_dest[3],
-           eth->h_dest[4],
-           eth->h_dest[5]
-    );
-    fprintf(log_file, "\t|-Protocol\t\t\t\t: %d\n", eth->h_proto);
-    
-    fprintf(log_file, "\nETH HEADER SIZE: %zu\nETH STRUCT SIZE: %zu\n", sizeof(*eth), sizeof(struct ethhdr));
+void icmp_header(unsigned char* buffer, size_t buflen) {
+    fprintf(log_file, "\n************************ICMP Packet******************************");
+
+    ethernet_header(buffer, buflen);
+    ip_header(buffer, buflen);
+
+    struct icmphdr* icmp = (struct icmphdr*)(buffer + sizeof(struct ethhdr) + iphdrlen);
+    fprintf(log_file, "\nICMP Header\n");
+
+    uint8_t type = icmp->type;
+    uint8_t code = icmp->code;
+    fprintf(log_file, "\t|-Type\t\t\t\t\t: %" PRIu8 " ", type);
+
+    char* code_description = NULL;
+    switch (type) {
+        case ICMP_ECHOREPLY:
+            fprintf(log_file, "(Echo reply)");
+            break;
+
+        case ICMP_ECHO:
+            fprintf(log_file, "(Echo request)");
+            break;
+    }
+    fprintf(log_file, "\n");
+
+    fprintf(log_file, "\t|-Code\t\t\t\t\t: %" PRIu8 "", code);
+    if (code_description != NULL)
+        fprintf(log_file, " (%s)", code_description);
+    fprintf(log_file, "\n");
+
+    switch (code) {
+    }
+
+    fprintf(log_file, "\t|-Checksum\t\t\t\t: %" PRIu16 " (0x%" PRIx16 ")\n", ntohs(icmp->checksum), ntohs(icmp->checksum));
+    fprintf(log_file, "\t|-Identifier\t\t\t: %" PRIu16 " (0x%" PRIx16 ")\n", ntohs(icmp->un.echo.id), ntohs(icmp->un.echo.id));
+    fprintf(log_file, "\t|-Sequence\t\t\t\t: %" PRIu16 " (0x%" PRIx16 ")\n", ntohs(icmp->un.echo.sequence), ntohs(icmp->un.echo.sequence));
+
+	fprintf(log_file, "*****************************************************************\n");
+    fprintf(log_file, "\nBUFLEN: %zu\n", buflen);
 }
 
 void tcp_header(unsigned char* buffer, size_t buflen) {
@@ -131,7 +180,7 @@ void tcp_header(unsigned char* buffer, size_t buflen) {
 
     fprintf(log_file, "\t|-Window size\t\t\t: %" PRIu16 "\n", ntohs(tcp->window));
     fprintf(log_file, "\t|-Checksum\t\t\t\t: %" PRIu16 " (0x%" PRIx16 ")\n", ntohs(tcp->check), ntohs(tcp->check));
-    fprintf(log_file, "\t|-Urgent Pointer\t\t: %" PRIu16 "\n", tcp->urg_ptr);
+    fprintf(log_file, "\t|-Urgent Pointer\t\t: %" PRIu16 "\n", ntohs(tcp->urg_ptr));
 
     payload(buffer, buflen);
     fprintf(log_file, "\nTCP HEADER SIZE: %zu\nTCP STRUCT SIZE: %zu\n", sizeof(*tcp), sizeof(struct tcphdr));
@@ -148,10 +197,10 @@ void udp_header(unsigned char* buffer, size_t buflen) {
     struct udphdr* udp = (struct udphdr*)(buffer + iphdrlen + sizeof(struct ethhdr));
 
     fprintf(log_file, "\nUDP Header\n");
-    fprintf(log_file, "\t|-Source Port\t\t\t: %" PRIu8 "\n", ntohs(udp->source));
-    fprintf(log_file, "\t|-Destination Port\t\t: %" PRIu8 "\n", ntohs(udp->dest));
-    fprintf(log_file, "\t|-UDP Length\t\t\t: %" PRIu8 "\n", ntohs(udp->len));
-    fprintf(log_file, "\t|-UDP Checksum\t\t\t: %" PRIu8 "\n", ntohs(udp->check));
+    fprintf(log_file, "\t|-Source Port\t\t\t: %" PRIu16 "\n", ntohs(udp->source));
+    fprintf(log_file, "\t|-Destination Port\t\t: %" PRIu16 "\n", ntohs(udp->dest));
+    fprintf(log_file, "\t|-UDP Length\t\t\t: %" PRIu16 "\n", ntohs(udp->len));
+    fprintf(log_file, "\t|-UDP Checksum\t\t\t: %" PRIu16 " (0x%" PRIx16 ")\n", ntohs(udp->check), ntohs(udp->check));
 
     payload(buffer, buflen);
     fprintf(log_file, "\nUDP HEADER SIZE: %zu\nUDP STRUCT SIZE: %zu\n", sizeof(*udp), sizeof(struct udphdr));
@@ -167,16 +216,21 @@ void process_data(unsigned char* buffer, size_t buflen) {
             ++tcp;
             tcp_header(buffer, buflen);
             break;
-            
+
         case UDP:
             ++udp;
             udp_header(buffer, buflen);
             break;
 
+        case ICMP:
+            ++icmp;
+            icmp_header(buffer, buflen);
+            break;
+
         default:
             ++other;
     }
-    printf("TCP: %d  UDP: %d  Other: %d  Total: %d\r", tcp, udp, other, total);
+    printf("ICMP: %d TCP: %d  UDP: %d  Other: %d  Total: %d\r", icmp, tcp, udp, other, total);
 }
 
 /* 
