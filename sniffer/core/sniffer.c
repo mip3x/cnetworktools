@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
      * Orig: https://csulrong.github.io/blogs/2022/03/10/linux-afpacket/ 
     */
     
-    if (sock_raw < 0) {
+    if (sock_raw == -1) {
         printf("error in socket\n");
         return -1;
     }
