@@ -36,7 +36,7 @@ enum status construct_eth_header(struct state* state) {
     eth->h_proto = htons(ETH_P_IP);
     state->packet_length += sizeof(struct ethhdr);
 
-    puts("CONSTRUCT ETH:");
+    puts("ETH packet description:");
 
     printf("\t|-Interface index: %d\n", state->ifreq_i.ifr_ifindex);
 	printf("\t|-Source IP addr: %s\n", inet_ntoa( ((struct sockaddr_in*) &state->ifreq_ip.ifr_addr)->sin_addr ));
