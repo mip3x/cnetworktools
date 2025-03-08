@@ -5,8 +5,8 @@
 
 unsigned int total, icmp, tcp, udp, other;
 
-void process_data(struct state state) {
-    struct iphdr* ip = (struct iphdr*)(state.buffer + sizeof(struct ethhdr));
+void process_data(struct state* state) {
+    struct iphdr* ip = (struct iphdr*)(state->buffer + sizeof(struct ethhdr));
     ++total;
     switch (ip->protocol) {
         case TCP:

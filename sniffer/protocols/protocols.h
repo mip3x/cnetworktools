@@ -13,14 +13,14 @@
 #define UDP 17
 
 /* L2 */
-void process_ethernet_header(struct state state);
+void process_ethernet_header(struct state* state);
 
 /* L3 */
-void process_ip_header(struct state state);
-void process_icmp_header(struct state state);
+void process_ip_header(struct state* state);
+void process_icmp_header(struct state* state);
 
 /* L4 */
-void process_tcp_header(struct state state);
-void process_udp_header(struct state state);
+void process_tcp_header(struct state* state);
+void process_udp_header(struct state* state);
 
 #endif

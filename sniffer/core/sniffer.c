@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
         state.buflen = recvfrom(sock_raw, buffer, BUFFER_SIZE, 0, &saddr, &saddr_len);
         
         fflush(state.log_file);
-        process_data(state);
+        process_data(&state);
     }
 
     close(sock_raw);
