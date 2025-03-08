@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
     while (true) {
         send_len = sendto(state.sock_raw,
                           state.sendbuff,
-                          SENDBUF_SIZE,
+                          state.packet_length,
                           0,
                           (const struct sockaddr*)&sadr_ll,
                           sizeof(struct sockaddr_ll)
