@@ -25,21 +25,22 @@ enum status get_eth_index(struct state* state) {
     return OK;
 }
 
-enum status construct_eth_header(struct state state) {
-    struct ethhdr* eth = (struct ethhdr*)state.sendbuff;
+enum status construct_eth_header(struct state* state) {
+    struct ethhdr* eth = (struct ethhdr*)state->sendbuff;
 
     for (size_t i = 0; i < MAC_ADDR_LEN; i++) {
-        eth->h_source[i] = (unsigned char)state.ifreq_c.ifr_hwaddr.sa_data[i];
-        eth->h_dest[i] = (unsigned char)state.dest_mac_addr.addr[i];
+        eth->h_source[i] = (unsigned char)state->ifreq_c.ifr_hwaddr.sa_data[i];
+        eth->h_dest[i] = (unsigned char)state->dest_mac_addr.addr[i];
     }
 
     eth->h_proto = htons(ETH_P_IP);
-    state.packet_length += sizeof(struct ethhdr);
+    state->packet_length += sizeof(struct ethhdr);
 
     puts("CONSTRUCT ETH:");
 
-    printf("\t|-Interface index: %d\n", state.ifreq_i.ifr_ifindex);
-	printf("\t|-Source IP addr: %s\n", inet_ntoa( ((struct sockaddr_in*) &state.ifreq_ip.ifr_addr)->sin_addr ));
+    printf("\t|-Interface index: %d\n", state->ifreq_i.ifr_ifindex);
+	printf("\t|-Source IP addr: %s\n", inet_ntoa( ((struct sockaddr_in*) &state->ifreq_ip.ifr_addr)->sin_addr ));
+
     printf("\t|-Source MAC addr: ");
 
     mac src = {0};

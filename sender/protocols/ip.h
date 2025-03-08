@@ -7,6 +7,6 @@
 #define ID_VALUE 10201
 
 enum status get_ip_addr(struct state* state);
-enum status construct_ip_header(struct state state);
+enum status construct_ip_header(struct state* state);
 
 #endif

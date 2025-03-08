@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
     memset(state.sendbuff, 0, SENDBUF_SIZE);
 
     puts("");
-    construct_eth_header(state);
+    construct_eth_header(&state);
 
     close(state.sock_raw);
 }

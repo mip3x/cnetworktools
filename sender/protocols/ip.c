@@ -19,18 +19,18 @@ enum status get_ip_addr(struct state* state) {
     return OK;
 }
 
-enum status construct_ip_header(struct state state) {
-    struct iphdr* iph = (struct iphdr*)(state.sendbuff + sizeof(struct ethhdr));
+enum status construct_ip_header(struct state* state) {
+    struct iphdr* iph = (struct iphdr*)(state->sendbuff + sizeof(struct ethhdr));
     iph->version = 4;
     iph->ihl = 5;
     iph->tos = 16;
     iph->id = htons(ID_VALUE);
     iph->ttl = 64;
     iph->protocol = 17;
-    iph->saddr = inet_addr(inet_ntoa( ((struct sockaddr_in*) &state.ifreq_ip.ifr_addr)->sin_addr));
-    iph->daddr = inet_addr(inet_ntoa( ((struct sockaddr_in*) &state.ifreq_ip.ifr_addr)->sin_addr));
+    iph->saddr = inet_addr(inet_ntoa( ((struct sockaddr_in*) &state->ifreq_ip.ifr_addr)->sin_addr));
+    iph->daddr = inet_addr(inet_ntoa( ((struct sockaddr_in*) &state->ifreq_ip.ifr_addr)->sin_addr));
 
-    state.packet_length += sizeof(struct iphdr);
+    state->packet_length += sizeof(struct iphdr);
 
     return OK;
 }

@@ -10,6 +10,8 @@
 #define DEFAULT_DEVICE_NAME "lo"
 #define SENDBUF_SIZE 64
 
+#define DEFAULT_PORT 54345
+
 struct state {
     char* interface_name;
     int sock_raw;

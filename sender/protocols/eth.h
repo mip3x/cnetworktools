@@ -5,6 +5,6 @@
 #include "../core/state.h"
 
 enum status get_eth_index(struct state* state);
-enum status construct_eth_header(struct state state);
+enum status construct_eth_header(struct state* state);
 
 #endif
