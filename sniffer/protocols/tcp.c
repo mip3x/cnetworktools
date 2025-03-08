@@ -1,3 +1,7 @@
+#include <arpa/inet.h>
+#include <netinet/tcp.h>
+#include <netinet/ether.h>
+
 #include "protocols.h"
 
 void process_tcp_header(struct state state) {

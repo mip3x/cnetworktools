@@ -3,7 +3,7 @@
 
 #include <net/if.h>
 
-#define DEFAULT_DEVICE_NAME "wlp0s20f0u14"
+#define DEFAULT_DEVICE_NAME "lo"
 
 struct state {
     char* interface_name;

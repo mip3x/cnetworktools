@@ -1,3 +1,7 @@
+#include <arpa/inet.h>
+#include <netinet/ether.h>
+#include <netinet/udp.h>
+
 #include "protocols.h"
 
 void process_udp_header(struct state state) {

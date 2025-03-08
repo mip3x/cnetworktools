@@ -1,3 +1,6 @@
+#include <netinet/ether.h>
+#include <netinet/ip.h>
+
 #include "../protocols/protocols.h"
 
 unsigned int total, icmp, tcp, udp, other;

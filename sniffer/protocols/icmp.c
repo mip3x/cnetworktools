@@ -1,3 +1,6 @@
+#include <netinet/ether.h>
+#include <netinet/ip_icmp.h>
+
 #include "protocols.h"
 
 void process_icmp_header(struct state state) {

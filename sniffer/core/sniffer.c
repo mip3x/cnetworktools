@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <netinet/if_ether.h>
+#include <netinet/ether.h>
 
 #include "state.h"
 #include "process_data.h"

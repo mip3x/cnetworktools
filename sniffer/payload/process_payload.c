@@ -1,3 +1,7 @@
+#include <netinet/ether.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+
 #include "../protocols/protocols.h"
 #include "../core/state.h"
 

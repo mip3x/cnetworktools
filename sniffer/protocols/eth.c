@@ -1,3 +1,5 @@
+#include <netinet/ether.h>
+
 #include "protocols.h"
 
 void process_ethernet_header(struct state state) {

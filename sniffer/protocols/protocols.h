@@ -1,13 +1,6 @@
 #ifndef PROTO_H
 #define PROTO_H
 
-#include <arpa/inet.h>
-#include <netinet/if_ether.h>
-#include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
-
 #include "../core/state.h"
 #include "../payload/payload.h"
 
