@@ -1,4 +1,8 @@
 #include <arpa/inet.h>
+#include <errno.h>
+#include <linux/if_packet.h>
+#include <netinet/ether.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -33,7 +37,33 @@ int main(int argc, char* argv[]) {
     memset(state.sendbuff, 0, SENDBUF_SIZE);
 
     puts("");
-    construct_eth_header(&state);
+
+    if (construct_eth_header(&state) == ERROR) return -1;
+    if (construct_ip_header(&state) == ERROR) return -1;
+
+    struct sockaddr_ll sadr_ll;
+	sadr_ll.sll_ifindex = state.ifreq_i.ifr_ifindex;
+	sadr_ll.sll_halen = ETH_ALEN;
+
+    for (size_t i = 0; i < MAC_ADDR_LEN; i++)
+        sadr_ll.sll_addr[i] = (unsigned char)state.dest_mac_addr.addr[i];
+
+    puts("sending...");
+    int send_len = 0;
+    while (true) {
+        send_len = sendto(state.sock_raw,
+                          state.sendbuff,
+                          SENDBUF_SIZE,
+                          0,
+                          (const struct sockaddr*)&sadr_ll,
+                          sizeof(struct sockaddr_ll)
+        );
+
+		if(send_len < 0) {
+			printf("error in sending:\n\nsendlen = %d\nerrno=%d\n", send_len, errno);
+			return -1;
+		}
+    }
 
     close(state.sock_raw);
 }
