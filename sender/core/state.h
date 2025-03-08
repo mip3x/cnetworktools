@@ -18,6 +18,7 @@ struct state {
     struct ifreq ifreq_c;
     struct ifreq ifreq_ip;
     mac dest_mac_addr;
+    uint16_t packet_length;
 };
 
 #endif

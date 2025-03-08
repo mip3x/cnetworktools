@@ -30,8 +30,11 @@ enum status construct_eth_header(struct state state) {
 
     for (size_t i = 0; i < MAC_ADDR_LEN; i++) {
         eth->h_source[i] = (unsigned char)state.ifreq_c.ifr_hwaddr.sa_data[i];
-        eth->h_dest[i] = state.dest_mac_addr.addr[i];
+        eth->h_dest[i] = (unsigned char)state.dest_mac_addr.addr[i];
     }
+
+    eth->h_proto = htons(ETH_P_IP);
+    state.packet_length += sizeof(struct ethhdr);
 
     puts("CONSTRUCT ETH:");
 
