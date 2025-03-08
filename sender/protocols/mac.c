@@ -4,12 +4,14 @@
 
 #include "protocols.h"
 
-void get_mac_address(struct state state) {
+enum status get_mac_addr(struct state state) {
     memset(&state.ifreq_c, 0, sizeof(state.ifreq_c));
     strncpy(state.ifreq_c.ifr_name, state.interface_name, IFNAMSIZ - 1);
  
-    if ((ioctl(state.sock_raw, SIOCGIFHWADDR, &state.ifreq_c)) == -1)
+    if ((ioctl(state.sock_raw, SIOCGIFHWADDR, &state.ifreq_c)) == -1) {
         printf("error in SIOCGIFHWADDR ioctl reading\n");
+        return ERROR;
+    }
 
     /* 
         * from <net/if.h>:
@@ -24,4 +26,6 @@ void get_mac_address(struct state state) {
            (unsigned char)(state.ifreq_c.ifr_hwaddr.sa_data[4]),
            (unsigned char)(state.ifreq_c.ifr_hwaddr.sa_data[5]))
     ;
+
+    return OK;
 }
