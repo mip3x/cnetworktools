@@ -10,7 +10,7 @@
 int main(int argc, char* argv[]) {
     struct state state = {0};
 
-    state.device_name = (argc == 2) ? argv[1] : DEFAULT_DEVICE_NAME;
+    state.interface_name = (argc == 2) ? argv[1] : DEFAULT_DEVICE_NAME;
 
     state.sock_raw = socket(AF_PACKET, SOCK_RAW, IPPROTO_RAW);
     if (state.sock_raw == -1) {
@@ -20,6 +20,7 @@ int main(int argc, char* argv[]) {
     printf("socket was opened successfully\n");
 
     get_eth_index(state);
+    get_mac_address(state);
 
     close(state.sock_raw);
 }

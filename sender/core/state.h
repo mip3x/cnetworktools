@@ -4,7 +4,7 @@
 #include <net/if.h>
 
 struct state {
-    char* device_name;
+    char* interface_name;
     int sock_raw;
     struct ifreq ifreq_i;
     struct ifreq ifreq_c;
