@@ -48,10 +48,12 @@ int main(int argc, char* argv[]) {
     for (size_t i = 0; i < MAC_ADDR_LEN; i++)
         sadr_ll.sll_addr[i] = (unsigned char)state.dest_mac_addr.addr[i];
 
+    size_t sent_len = 0;
+    size_t packets_count = 0;
     puts("sending...");
-    int send_len = 0;
+
     while (true) {
-        send_len = sendto(state.sock_raw,
+        sent_len = sendto(state.sock_raw,
                           state.sendbuff,
                           state.packet_length,
                           0,
@@ -59,10 +61,13 @@ int main(int argc, char* argv[]) {
                           sizeof(struct sockaddr_ll)
         );
 
-		if(send_len < 0) {
-			printf("error in sending:\n\nsendlen = %d\nerrno=%d\n", send_len, errno);
+		if (sent_len == -1) {
+			printf("error in sending:\n\nsendlen = %zu\nerrno = %d\n", sent_len, errno);
 			return -1;
 		}
+        printf("sent packet #%zu length of %zu bytes\n", ++packets_count, sent_len);
+        
+        usleep(LATENCY_MICROSEC);
     }
 
     close(state.sock_raw);

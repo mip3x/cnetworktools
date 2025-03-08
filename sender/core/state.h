@@ -12,6 +12,8 @@
 
 #define DEFAULT_PORT 54345
 
+#define LATENCY_MICROSEC 800000 
+
 struct state {
     char* interface_name;
     int sock_raw;
