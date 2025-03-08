@@ -4,6 +4,6 @@
 #include "../core/status.h"
 #include "../core/state.h"
 
-enum status get_ip_addr(struct state state);
+enum status get_ip_addr(struct state* state);
 
 #endif

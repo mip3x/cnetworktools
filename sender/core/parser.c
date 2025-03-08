@@ -26,11 +26,9 @@ enum status parse_config(const char* const file_name, struct state* state) {
             state->interface_name = strdup(value);
         else if (strcmp(key, DEST_MAC_ADDR_KEY) == 0) {
             if (parse_mac_addr(state, value) == ERROR) {
-                printf("error in parsing mac address\n");
+                puts("error in parsing mac address");
                 return ERROR;
             }
-            printf("Destination ");
-            print_mac_addr(state->dest_mac_addr);
         }
     }
 
