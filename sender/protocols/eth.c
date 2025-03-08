@@ -1,10 +1,9 @@
 #include <arpa/inet.h>
+#include <inttypes.h>
 #include <netinet/ether.h>
 #include <sys/ioctl.h>
 #include <string.h>
 #include <stdio.h>
-
-#include <inttypes.h>
 
 #include "eth.h"
 #include "mac_utils.h"
@@ -39,10 +38,16 @@ enum status construct_eth_header(struct state state) {
     printf("\t|-Interface index: %d\n", state.ifreq_i.ifr_ifindex);
 	printf("\t|-Source IP addr: %s\n", inet_ntoa( ((struct sockaddr_in*) &state.ifreq_ip.ifr_addr)->sin_addr ));
     printf("\t|-Source MAC addr: ");
-    print_mac_addr(state.dest_mac_addr);
+
+    mac src = {0};
+    memcpy(src.addr, eth->h_source, 6);
+    print_mac_addr(src);
 
     printf("\t|-Destination MAC addr: ");
-    print_mac_addr(state.dest_mac_addr);
+
+    mac dst = {0};
+    memcpy(dst.addr, eth->h_dest, 6);
+    print_mac_addr(dst);
 
     return OK;
 }
