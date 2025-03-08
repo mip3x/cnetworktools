@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "protocols.h"
+#include "ip.h"
 
 enum status get_ip_addr(struct state state) {
     memset(&state.ifreq_ip, 0, sizeof(state.ifreq_ip));

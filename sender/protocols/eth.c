@@ -1,8 +1,9 @@
+#include <netinet/ether.h>
 #include <sys/ioctl.h>
 #include <string.h>
 #include <stdio.h>
 
-#include "protocols.h"
+#include "eth.h"
 
 enum status get_eth_index(struct state state) {
     memset(&state.ifreq_i, 0, sizeof(state.ifreq_i));
@@ -19,6 +20,12 @@ enum status get_eth_index(struct state state) {
     }
 
     printf("Interface index: %d\n", state.ifreq_i.ifr_ifindex);
+
+    return OK;
+}
+
+enum status construct_eth_header(struct state state) {
+    struct ethhdr* eth = (struct ethhdr*)state.sendbuff;
 
     return OK;
 }

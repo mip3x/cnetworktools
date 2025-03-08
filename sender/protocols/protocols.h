@@ -1,14 +1,11 @@
 #ifndef PROTOCOLS_H
 #define PROTOCOLS_H
 
-#include "../core/state.h"
-#include "../core/status.h"
-
 // L2
-enum status get_eth_index(struct state);
-enum status get_mac_addr(struct state);
+#include "eth.h"
+#include "mac_utils.h"
 
 // L3
-enum status get_ip_addr(struct state);
+#include "ip.h"
 
 #endif
