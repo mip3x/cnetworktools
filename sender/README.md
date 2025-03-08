@@ -11,15 +11,15 @@ Ensure you have the following dependencies installed:
 - GNU Make
 
 ### Build
-To compile the sniffer, run:
+To compile the `sender`, run:
 ```sh
 make
 ```
 
 This will generate an executable named `sender`
 
-## Running the Sniffer
-To start the sniffer, use:
+## Running the Sender
+To start the `sender`, use:
 ```sh
 sudo ./sender
 ```
