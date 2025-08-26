@@ -12,6 +12,17 @@
 
 #define IP_ADDR_MAX_LEN 16
 
+uint16_t endian16(uint16_t x) {
+    uint8_t a, b;
+    uint16_t y;
+
+    b = (x & 0x00ff);
+    a = ((x & 0xff00) >> 8);
+    y = (b << 8) | a;
+
+    return y;
+}
+
 /*
  * https://repo.doctorbirch.com/birchutils/v1.3/files/birchutils.c
  */
@@ -39,6 +50,7 @@ uint16_t checksum(uint8_t *pkt, uint16_t size) {
     uint16_t carry;
     uint16_t n;
     uint16_t sum;
+    uint16_t ret;
 
     acc = 0;
     for (n = size, ptr = (uint16_t*)pkt; n; n -= 2, ptr++) {
@@ -47,8 +59,10 @@ uint16_t checksum(uint8_t *pkt, uint16_t size) {
     }
     carry = ((acc & 0xffff0000) >> 16);
     sum = (acc & 0x0000ffff);
+    ret = ~(sum + carry);
 
-    return ~(sum + carry);
+    // return endian16(ret);
+    return ret;
 }
 
 void memory_copy(uint8_t *dst, uint8_t *src, uint16_t size) {
@@ -60,7 +74,7 @@ void memory_copy(uint8_t *dst, uint8_t *src, uint16_t size) {
     return;
 }
 
-uint8_t* eval_icmp(struct icmp_header* pkt) {
+uint8_t* eval_icmp(struct icmp* pkt) {
     uint8_t *ptr, *ret;
     uint16_t full_icmp_pkt_size;
     struct icmp_raw_header rawpkt;
@@ -116,7 +130,7 @@ uint8_t* eval_icmp(struct icmp_header* pkt) {
     return ret;
 }
 
-void show_icmp(struct icmp_header* pkt) {
+void show_icmp(struct icmp* pkt) {
     if (!pkt) {
         fprintf(stderr, "Invalid ICMP packet!\n");
         return;
@@ -134,18 +148,18 @@ void show_icmp(struct icmp_header* pkt) {
     return;
 }
 
-struct icmp_header* make_icmp(enum icmp_header_type kind, const uint8_t* payload_data, uint16_t payload_size) {
-    struct icmp_header *icmp_header_ptr;
+struct icmp* make_icmp(enum icmp_header_type kind, const uint8_t* payload_data, uint16_t payload_size) {
+    struct icmp *icmp_header_ptr;
     uint16_t full_icmp_pkt_size;
 
     if (!payload_data || !payload_size)
         return NULL;
 
-    full_icmp_pkt_size = sizeof(struct icmp_header) + payload_size;
-    icmp_header_ptr = (struct icmp_header*)malloc(full_icmp_pkt_size);
+    full_icmp_pkt_size = sizeof(struct icmp) + payload_size;
+    icmp_header_ptr = (struct icmp*)malloc(full_icmp_pkt_size);
 
     if (icmp_header_ptr == NULL) {
-        fprintf(stderr, "Problem allocating icmp_header struct\n");
+        fprintf(stderr, "Problem allocating icmp struct\n");
         return NULL;
     }
     memset(icmp_header_ptr, 0, full_icmp_pkt_size);
@@ -204,7 +218,7 @@ int main(int argc, char** argv) {
     uint8_t* str;
     uint8_t* raw;
     uint16_t size;
-    struct icmp_header* pkt;
+    struct icmp* pkt;
 
     str = malloc(strlen(MAGIC_PAYLOAD));
     if (str == NULL) {
