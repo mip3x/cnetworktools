@@ -13,6 +13,54 @@
 
 #define IP_ADDR_MAX_LEN 16
 
+uint32_t setup() {
+    uint32_t s, one;
+    signed int tmp;
+
+    one = (uint32_t)1;
+    tmp = socket(AF_INET, SOCK_RAW, 1);
+    if (tmp > 2)
+        s = (uint32_t)tmp;
+    else
+        s = (uint32_t)0;
+
+    tmp = setsockopt(s, SOL_IP, IP_HDRINCL, (int*)&one, sizeof(uint32_t));
+
+    if (tmp)
+        return (uint32_t)0;
+
+    return s;
+}
+
+bool sendip(uint32_t s, struct ip* pkt) {
+    uint8_t *raw;
+    uint16_t n;
+    signed int ret;
+    struct sockaddr_in sock;
+
+    if (!pkt)
+        return false;
+
+    memset((uint8_t*)&sock, 0, sizeof(sock));
+
+    raw = eval(pkt);
+    n =
+    (
+        sizeof(struct ip_raw_hdr)
+        + sizeof(struct icmp_raw_hdr)
+        + pkt->payload->payload_size
+    );
+
+    sock.sin_addr.s_addr = (in_addr_t)pkt->dst;
+    ret = sendto(s, raw, (uint8_t)n, 0, 
+                 (const struct sockaddr*)&sock, sizeof(sock));
+
+    if (ret < 0) 
+        return false;
+    else
+        return true;
+}
+
 uint8_t* eval_ip(struct ip* pkt) {
     struct ip_raw_hdr rawpkt;
     struct ip_raw_hdr *rawptr;
@@ -51,7 +99,7 @@ uint8_t* eval_ip(struct ip* pkt) {
         lengthle = (rawpkt.ihl * 4) + pkt->payload->payload_size +
             sizeof(struct icmp_raw_hdr);
         lengthbe = endian16(lengthle);
-        rawpkt.length = lengthle;
+        rawpkt.length = lengthbe;
     }
     else
         lengthle = rawpkt.length = (rawpkt.ihl * 4);
@@ -79,9 +127,11 @@ uint8_t* eval_ip(struct ip* pkt) {
     ptr += size;
 
     if (pkt->payload) {
+        size = (sizeof(struct icmp_raw_hdr) +
+            pkt->payload->payload_size);
         icmpptr = eval_icmp(pkt->payload);
         if (icmpptr) {
-            memory_copy(ptr, icmpptr, pkt->payload->payload_size);
+            memory_copy(ptr, icmpptr, size);
             free(icmpptr);
         }
     }
@@ -139,7 +189,12 @@ void show_ip(uint8_t* ident, struct ip* pkt) {
         return;
     }
 
+    uint16_t pkt_size = (sizeof(struct ip_raw_hdr)
+        + sizeof(struct icmp_raw_hdr)
+        + pkt->payload->payload_size);
+
     printf("(ip *)%s = {\n", (char*)ident);
+    printf("  size:\t %d bytes total\n", pkt_size);
     printf("  kind:\t 0x%.02hhx\n", (char)pkt->kind);
     printf("  id:\t 0x%.02hhx\n", (uint8_t)pkt->id);
     printf("  src:\t %s\n", (char*)todotted(pkt->src));
@@ -292,7 +347,7 @@ void show_icmp(uint8_t* ident, struct icmp* pkt) {
 
     printf("(icmp *)%s = {\n", (char*)ident);
     printf("  kind:\t %s\n", (pkt->kind == echo) ? "Echo" : "Echo Reply");
-    printf("  size:\t %d\n", (uint16_t)pkt->payload_size);
+    printf("  size:\t %d bytes of payload\n", (uint16_t)pkt->payload_size);
     printf("}\n");
     printf("payload:\n");
 
@@ -352,7 +407,7 @@ char* get_ip_from_input(char* input, struct sockaddr_in* addr) {
     return ip;
 }
 
-int main(int argc, char** argv) {
+int main1(int argc, char** argv) {
     struct sockaddr_in src = { .sin_family = AF_INET };
     struct sockaddr_in dst;
     memset((char *)&dst, 0, sizeof(dst));
@@ -371,32 +426,40 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    uint8_t* str;
+    struct ping* str;
     uint8_t* raw;
     uint16_t rnd;
     uint16_t size;
     struct icmp* icmppkt;
     struct ip* ippkt;
+    uint32_t s;
+    bool ret;
 
     (void)rnd;
     srand(getpid());
     rnd = rand() % 50000;
 
-    str = malloc(strlen(MAGIC_PAYLOAD));
+    size = (sizeof(struct ping)
+        + 4);
+    str = (struct ping*)malloc(size);
     if (str == NULL) {
         fprintf(stderr, "Problem allocating str\n");
         free(ip);
         return 1;
     }
-    strncpy((char*)str, MAGIC_PAYLOAD, strlen((char*)str));
+    memset(str, 0, size);
+    
+    str->id = endian16(5000);
+    str->seq = endian16(1);
+    strncpy((char*)str->data, MAGIC_PAYLOAD, strlen((char*)str));
 
-    icmppkt = make_icmp(echo, str, strlen((char*)str));
+    icmppkt = make_icmp(echo, (uint8_t*)str, size);
     if (icmppkt == NULL) {
         free(ip);
         return 1;
     }
 
-    ippkt = make_ip(icmp_proto, (uint8_t*)"192.168.1.198", (uint8_t*)"212.16.16.214", 0, &rnd);
+    ippkt = make_ip(icmp_proto, (uint8_t*)"192.168.1.198", (uint8_t*)ip, 0, &rnd);
     if (ippkt == NULL) {
         free(icmppkt->payload_data);
         free(icmppkt);
@@ -411,6 +474,15 @@ int main(int argc, char** argv) {
     show(ippkt);
     printhex(raw, size, ' ');
 
+    s = setup();
+    if (!s) {
+        printf("error\n");
+        return 1;
+    }
+
+    ret = sendip(s, ippkt);
+    printf("ret=%s\n", (ret) ? "true" : "false");
+
     free(icmppkt->payload_data);
     free(icmppkt);
     free(ippkt);
@@ -418,3 +490,8 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
+int main(int argc, char** argv) {
+    return main1(argc, argv);
+}
+

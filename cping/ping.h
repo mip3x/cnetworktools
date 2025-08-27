@@ -13,6 +13,11 @@
 #define IP_DEFAULT_TTL 250
 #define IP_DEFAULT_VERSION 4
 
+#define eval(x) _Generic((x),                  \
+    struct ip*:    eval_ip((struct ip*)x),     \
+    struct icmp*:  eval_icmp((struct icmp*)x)  \
+)
+
 #define show(x) _Generic((x),                                   \
     struct ip*:    show_ip((uint8_t*)# x, ((struct ip*)x)),     \
     struct icmp*:  show_icmp((uint8_t*)# x, ((struct icmp*)x))  \
@@ -44,8 +49,8 @@ struct icmp {
 } __attribute__((packed));
 
 struct ip_raw_hdr {
-    uint8_t version:4;
     uint8_t ihl:4;
+    uint8_t version:4;
     uint8_t dscp:6;
     uint8_t ecn:2;
     uint16_t length;
@@ -66,6 +71,12 @@ struct ip {
     uint32_t dst;
     uint16_t id;
     struct icmp* payload;
+} __attribute__((packed));
+
+struct ping {
+    uint16_t id;
+    uint16_t seq;
+    uint8_t data[];
 } __attribute__((packed));
 
 // common
