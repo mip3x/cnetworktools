@@ -271,7 +271,7 @@ uint16_t checksum(uint8_t *pkt, uint16_t size) {
     sum = (acc & 0x0000ffff);
     ret = ~(sum + carry);
 
-    return endian16(ret);
+    return ret;
 }
 
 void memory_copy(uint8_t *dst, uint8_t *src, uint16_t size) {
@@ -459,7 +459,7 @@ int main1(int argc, char** argv) {
         return 1;
     }
 
-    ippkt = make_ip(icmp_proto, (uint8_t*)"192.168.1.198", (uint8_t*)ip, 0, &rnd);
+    ippkt = make_ip(icmp_proto, (uint8_t*)"192.168.0.13", (uint8_t*)ip, 0, &rnd);
     if (ippkt == NULL) {
         free(icmppkt->payload_data);
         free(icmppkt);
